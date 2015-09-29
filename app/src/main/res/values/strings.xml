@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">GeoGuide</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="curr_loc">Current Location</string>
+    <string name="end_loc_hint">Enter your Destination</string>
+    <string name="end_loc">End Location</string>
+    <string name="getLocationButtonText">Get My Location</string>
+</resources>
