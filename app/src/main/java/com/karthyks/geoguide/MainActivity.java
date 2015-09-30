@@ -164,7 +164,8 @@ public class MainActivity extends AppCompatActivity implements
     {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
-
+        _latitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
+        _longitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
         if(mRequestingLocationUpdates)
         {
             startLocationUpdates();
@@ -202,6 +203,8 @@ public class MainActivity extends AppCompatActivity implements
             case Constants.STATUS_FINISHED:
                 resultText = resultData.getString("location");
                 _currentLocation.setText(resultText);
+                _latitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
+                _longitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
                 break;
             case Constants.STATUS_ERROR:
                 resultText = resultData.getString("message");
