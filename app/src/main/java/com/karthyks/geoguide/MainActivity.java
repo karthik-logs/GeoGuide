@@ -35,6 +35,8 @@ public class MainActivity extends AppCompatActivity implements
 
     String resultText;
     String mLastUpdateTime;
+    String mLatitude;
+    String mLongitude;
     private boolean mRequestingLocationUpdates;
     LocationRequest mLocationRequest;
 
@@ -58,16 +60,20 @@ public class MainActivity extends AppCompatActivity implements
         mGoogleApiClient.connect();
     }
 
+    private void UpdateUIText()
+    {
+        _currentLocation.setText(resultText);
+        _latitudeText.setText(mLatitude);
+        _longitudeText.setText(mLongitude);
+    }
+
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         resultText = savedInstanceState.getString("lastLocation");
-        _latitudeText.setText(savedInstanceState.getString("lastLocationLatitude"));
-        _longitudeText.setText(savedInstanceState.getString("lastLocationLongitude"));
-        if(resultText != null)
-        {
-            _currentLocation.setText(resultText);
-        }
+        mLatitude = savedInstanceState.getString("lastLocationLatitude");
+        mLongitude = savedInstanceState.getString("lastLocationLongitude");
+        UpdateUIText();
     }
 
     @Override
@@ -78,8 +84,8 @@ public class MainActivity extends AppCompatActivity implements
         outState.putString(Constants.LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
         super.onSaveInstanceState(outState);
         outState.putString("lastLocation", resultText);
-        outState.putString("lastLocationLatitude", _latitudeText.getText().toString());
-        outState.putString("lastLocationLongitude", _longitudeText.getText().toString());
+        outState.putString("lastLocationLatitude", mLatitude);
+        outState.putString("lastLocationLongitude", mLongitude);
     }
 
 
@@ -164,8 +170,6 @@ public class MainActivity extends AppCompatActivity implements
     {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
-        _latitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
-        _longitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
         if(mRequestingLocationUpdates)
         {
             startLocationUpdates();
@@ -202,9 +206,9 @@ public class MainActivity extends AppCompatActivity implements
                 break;
             case Constants.STATUS_FINISHED:
                 resultText = resultData.getString("location");
-                _currentLocation.setText(resultText);
-                _latitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
-                _longitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
+                mLatitude = String.valueOf(mLastLocation.getLatitude());
+                mLongitude = String.valueOf(mLastLocation.getLongitude());
+                UpdateUIText();
                 break;
             case Constants.STATUS_ERROR:
                 resultText = resultData.getString("message");
@@ -216,9 +220,18 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
-        _latitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
-        _longitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
+        mLatitude = String.valueOf(mLastLocation.getLatitude());
+        mLongitude = String.valueOf(mLastLocation.getLongitude());
+        UpdateUIText();
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+    }
+
+    public void OpenMapActivity(View v)
+    {
+        Intent mapIntent = new Intent(this, MapsActivity.class);
+        mapIntent.putExtra("Latitude", mLastLocation.getLatitude());
+        mapIntent.putExtra("Longitude", mLastLocation.getLongitude());
+        startActivity(mapIntent);
     }
 
 
@@ -238,8 +251,9 @@ public class MainActivity extends AppCompatActivity implements
                 // Since LOCATION_KEY was found in the Bundle, we can be sure that
                 // mCurrentLocation is not null.
                 mLastLocation = savedInstanceState.getParcelable(Constants.LOCATION_KEY);
-                _latitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
-                _longitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
+                mLatitude = String.valueOf(mLastLocation.getLatitude());
+                mLongitude = String.valueOf(mLastLocation.getLongitude());
+                UpdateUIText();
             }
 
             // Update the value of mLastUpdateTime from the Bundle and update the UI.

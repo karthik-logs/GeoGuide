@@ -13,7 +13,9 @@
         android:id="@+id/curr_loc"
         android:layout_marginTop="129dp"
         android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:clickable="true"
+        android:onClick="OpenMapActivity" />
 
     <EditText
         android:layout_width="wrap_content"
