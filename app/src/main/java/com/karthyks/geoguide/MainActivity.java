@@ -2,7 +2,6 @@ package com.karthyks.geoguide;
 
 import android.content.Intent;
 import android.location.Location;
-import android.location.LocationListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +14,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationListener;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -175,12 +175,12 @@ public class MainActivity extends AppCompatActivity implements
 
     protected void startLocationUpdates() {
         LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, mLocationRequest, (com.google.android.gms.location.LocationListener) this);
+                mGoogleApiClient, mLocationRequest, this);
     }
 
     protected void stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(
-                mGoogleApiClient, (com.google.android.gms.location.LocationListener) this);
+                mGoogleApiClient, this);
     }
 
     @Override
@@ -208,20 +208,6 @@ public class MainActivity extends AppCompatActivity implements
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
     }
 
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
