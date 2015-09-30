@@ -7,4 +7,7 @@
     <string name="end_loc_hint">Enter your Destination</string>
     <string name="end_loc">End Location</string>
     <string name="getLocationButtonText">Get My Location</string>
+
+    <string name="latitudeText">0 0 0</string>
+    <string name="longitudeText">0 0 0</string>
 </resources>

@@ -27,6 +27,8 @@ public class MainActivity extends AppCompatActivity implements
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     TextView _currentLocation;
+    TextView _latitudeText;
+    TextView _longitudeText;
 
     Intent geoLocatorIntent;
     GeoLocatorReceiver geoLocatorReceiver;
@@ -43,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements
         geoLocatorReceiver = new GeoLocatorReceiver(new Handler());
         geoLocatorReceiver.setReceiver(this);
         _currentLocation = (TextView) findViewById(R.id.curr_loc);
+        _latitudeText = (TextView) findViewById(R.id.latitude);
+        _longitudeText = (TextView) findViewById(R.id.longitude);
         buildGoogleApiClient();
         createLocationRequest();
         updateValuesFromBundle(savedInstanceState);
@@ -58,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         resultText = savedInstanceState.getString("lastLocation");
+        _latitudeText.setText(savedInstanceState.getString("lastLocationLatitude"));
+        _longitudeText.setText(savedInstanceState.getString("lastLocationLongitude"));
         if(resultText != null)
         {
             _currentLocation.setText(resultText);
@@ -72,6 +78,8 @@ public class MainActivity extends AppCompatActivity implements
         outState.putString(Constants.LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
         super.onSaveInstanceState(outState);
         outState.putString("lastLocation", resultText);
+        outState.putString("lastLocationLatitude", _latitudeText.getText().toString());
+        outState.putString("lastLocationLongitude", _longitudeText.getText().toString());
     }
 
 
@@ -205,6 +213,8 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onLocationChanged(Location location) {
         mLastLocation = location;
+        _latitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
+        _longitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
     }
 
@@ -225,6 +235,8 @@ public class MainActivity extends AppCompatActivity implements
                 // Since LOCATION_KEY was found in the Bundle, we can be sure that
                 // mCurrentLocation is not null.
                 mLastLocation = savedInstanceState.getParcelable(Constants.LOCATION_KEY);
+                _latitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
+                _longitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
             }
 
             // Update the value of mLastUpdateTime from the Bundle and update the UI.
