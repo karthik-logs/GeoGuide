@@ -1,34 +1,39 @@
 package com.karthyks.geoguide;
 
-import android.location.Address;
-import android.location.Geocoder;
+import android.content.Intent;
 import android.location.Location;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
-import java.io.IOException;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GeoLocatorReceiver.Receiver
+{
+
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
-
     TextView _currentLocation;
+
+    Intent geoLocatorIntent;
+    GeoLocatorReceiver geoLocatorReceiver;
+
+    String resultText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        geoLocatorReceiver = new GeoLocatorReceiver(new Handler());
+        geoLocatorReceiver.setReceiver(this);
         _currentLocation = (TextView) findViewById(R.id.curr_loc);
         buildGoogleApiClient();
     }
@@ -40,10 +45,31 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        resultText = savedInstanceState.getString("lastLocation");
+        if(resultText != null)
+        {
+            _currentLocation.setText(resultText);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("lastLocation", resultText);
+    }
+
+    @Override
     protected void onStop() {
         if(mGoogleApiClient.isConnected())
             mGoogleApiClient.disconnect();
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     @Override
@@ -71,29 +97,14 @@ public class MainActivity extends AppCompatActivity implements
 
     public void GeoLocate(View v)
     {
-        Geocoder gc = new Geocoder(this);
-        List<Address> addresses;
-        try {
-            addresses = gc.getFromLocation(mLastLocation.getLatitude(),mLastLocation.getLongitude(),1);
-            Address add = addresses.get(0);
-            String location = add.getAddressLine(0) + add.getAddressLine(1);
-            if(add.getAddressLine(0) != null)
-            {
-                location = add.getAddressLine(0);
-            }
-            if(add.getAddressLine(1) != null)
-            {
-                location += add.getAddressLine(1);
-            }
-            if(add.getAddressLine(2) != null)
-            {
-                location += add.getAddressLine(2);
-            }
-            _currentLocation.setText(location);
-        } catch (IOException e) {
-            Toast.makeText(getApplicationContext(),e.toString(), Toast.LENGTH_LONG).show();
+        if(mLastLocation != null)
+        {
+            geoLocatorIntent = new Intent(this, GeoLocator.class);
+            geoLocatorIntent.putExtra("latitude", mLastLocation.getLatitude());
+            geoLocatorIntent.putExtra("longitude", mLastLocation.getLongitude());
+            geoLocatorIntent.putExtra("receiver", geoLocatorReceiver);
+            startService(geoLocatorIntent);
         }
-
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -105,13 +116,10 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onConnected(Bundle bundle) {
+    public void onConnected(Bundle bundle)
+    {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
-        if (mLastLocation != null) {
-           // mLatitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
-            //mLongitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
-        }
     }
 
     @Override
@@ -122,5 +130,24 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
+    }
+
+    @Override
+    public void onReceiveResult(int resultCode, Bundle resultData) {
+        switch(resultCode)
+        {
+            case Constants.STATUS_RUNNING:
+                resultText = "Searching...";
+                _currentLocation.setText("Searching...");
+                break;
+            case Constants.STATUS_FINISHED:
+                resultText = resultData.getString("location");
+                _currentLocation.setText(resultText);
+                break;
+            case Constants.STATUS_ERROR:
+                resultText = resultData.getString("message");
+                _currentLocation.setText(resultText);
+                break;
+        }
     }
 }
