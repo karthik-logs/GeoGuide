@@ -1,25 +1,31 @@
 package com.karthyks.geoguide;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
+import android.content.IntentFilter;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-
-import com.google.android.gms.location.LocationListener;
+import android.support.v4.content.LocalBroadcastManager;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapsActivity extends FragmentActivity implements LocationListener, OnMapReadyCallback{
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
 
     private double mLatitude;
     private double mLongitude;
+
+    Intent mLocationServiceIntent;
+
+    Marker mMarker;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,13 +33,36 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
         mLatitude = intent.getDoubleExtra("Latitude", 0);
         mLongitude = intent.getDoubleExtra("Longitude", 0);
         setContentView(R.layout.activity_maps);
+        mLocationServiceIntent = new Intent(this, LocationUpdateService.class);
+        startService(mLocationServiceIntent);
         setUpMapIfNeeded();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        startService(mLocationServiceIntent);
+        LocalBroadcastManager.getInstance(this).registerReceiver(locationUpdates, new IntentFilter("LocationResult"));
         setUpMapIfNeeded();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopService(mLocationServiceIntent);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdates);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopService(mLocationServiceIntent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopService(mLocationServiceIntent);
     }
 
     /**
@@ -76,7 +105,10 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(mLatitude, mLongitude)).title("You are here!"));
+        if(mMarker == null)
+            mMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(mLatitude, mLongitude)).title("You are here!"));
+        else
+           mMarker.setPosition(new LatLng(mLatitude, mLongitude));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(mLatitude, mLongitude)));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
                 new LatLng(mLatitude, mLongitude), 13));
@@ -89,16 +121,19 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
                 .build();                   // Creates a CameraPosition from the builder
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        mLatitude = location.getLatitude();
-        mLongitude = location.getLongitude();
-    }
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         setUpMap();
-
     }
+
+    private BroadcastReceiver locationUpdates = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Double lat = Double.parseDouble(intent.getStringExtra("latitude"));
+            Double lon = Double.parseDouble(intent.getStringExtra("longitude"));
+            mLatitude = lat;
+            mLongitude = lon;
+            setUpMap();
+        }
+    };
 }

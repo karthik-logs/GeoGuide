@@ -1,67 +1,54 @@
 package com.karthyks.geoguide;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationListener;
+public class MainActivity extends AppCompatActivity {
 
-import java.text.DateFormat;
-import java.util.Date;
-
-
-public class MainActivity extends AppCompatActivity implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GeoLocatorReceiver.Receiver, LocationListener
-{
-
-    GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
+
+    // UI components
     TextView _currentLocation;
     TextView _latitudeText;
     TextView _longitudeText;
 
-    Intent geoLocatorIntent;
-    GeoLocatorReceiver geoLocatorReceiver;
 
     String resultText;
     String mLastUpdateTime;
     String mLatitude;
     String mLongitude;
     private boolean mRequestingLocationUpdates;
-    LocationRequest mLocationRequest;
+
+    Intent mLocationServiceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        geoLocatorReceiver = new GeoLocatorReceiver(new Handler());
-        geoLocatorReceiver.setReceiver(this);
         _currentLocation = (TextView) findViewById(R.id.curr_loc);
+        _currentLocation.setClickable(false);
         _latitudeText = (TextView) findViewById(R.id.latitude);
         _longitudeText = (TextView) findViewById(R.id.longitude);
-        buildGoogleApiClient();
-        createLocationRequest();
+        mLocationServiceIntent = new Intent(this, LocationUpdateService.class);
         updateValuesFromBundle(savedInstanceState);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        mGoogleApiClient.connect();
     }
 
-    private void UpdateUIText()
-    {
+    private void UpdateUIText() {
         _currentLocation.setText(resultText);
         _latitudeText.setText(mLatitude);
         _longitudeText.setText(mLongitude);
@@ -92,26 +79,27 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
-            startLocationUpdates();
-        }
+        startService(mLocationServiceIntent);
+        LocalBroadcastManager.getInstance(this).registerReceiver(locationUpdate, new IntentFilter("LocationResult"));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        stopLocationUpdates();
+        stopService(mLocationServiceIntent);
+        _currentLocation.setClickable(false);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdate);
     }
 
     @Override
     protected void onStop() {
-        if(mGoogleApiClient.isConnected())
-            mGoogleApiClient.disconnect();
+        stopService(mLocationServiceIntent);
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
+        stopService(mLocationServiceIntent);
         super.onDestroy();
     }
 
@@ -138,99 +126,26 @@ public class MainActivity extends AppCompatActivity implements
     }
 
 
-    public void GeoLocate(View v)
-    {
-        if(mLastLocation != null)
-        {
-            geoLocatorIntent = new Intent(this, GeoLocator.class);
-            geoLocatorIntent.putExtra("latitude", mLastLocation.getLatitude());
-            geoLocatorIntent.putExtra("longitude", mLastLocation.getLongitude());
-            geoLocatorIntent.putExtra("receiver", geoLocatorReceiver);
-            startService(geoLocatorIntent);
+    public void GeoLocate(View v) {
+        //startService(mLocationServiceIntent);
+    }
+
+    private BroadcastReceiver locationUpdate =  new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            resultText = intent.getStringExtra("location");
+            mLatitude = intent.getStringExtra("latitude");
+            mLongitude = intent.getStringExtra("longitude");
+            mLastUpdateTime = intent.getStringExtra("lastUpdateTime");
+            _currentLocation.setClickable(true);
+            UpdateUIText();
         }
-    }
+    };
 
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
-
-    protected void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
-    @Override
-    public void onConnected(Bundle bundle)
-    {
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                mGoogleApiClient);
-        if(mRequestingLocationUpdates)
-        {
-            startLocationUpdates();
-        }
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-    }
-
-    protected void startLocationUpdates() {
-        LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, mLocationRequest, this);
-    }
-
-    protected void stopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(
-                mGoogleApiClient, this);
-    }
-
-    @Override
-    public void onReceiveResult(int resultCode, Bundle resultData) {
-        switch(resultCode)
-        {
-            case Constants.STATUS_RUNNING:
-                resultText = "Searching...";
-                _currentLocation.setText("Searching...");
-                break;
-            case Constants.STATUS_FINISHED:
-                resultText = resultData.getString("location");
-                mLatitude = String.valueOf(mLastLocation.getLatitude());
-                mLongitude = String.valueOf(mLastLocation.getLongitude());
-                UpdateUIText();
-                break;
-            case Constants.STATUS_ERROR:
-                resultText = resultData.getString("message");
-                _currentLocation.setText(resultText);
-                break;
-        }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        mLastLocation = location;
-        mLatitude = String.valueOf(mLastLocation.getLatitude());
-        mLongitude = String.valueOf(mLastLocation.getLongitude());
-        UpdateUIText();
-        mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-    }
-
-    public void OpenMapActivity(View v)
-    {
+    public void OpenMapActivity(View v) {
         Intent mapIntent = new Intent(this, MapsActivity.class);
-        mapIntent.putExtra("Latitude", mLastLocation.getLatitude());
-        mapIntent.putExtra("Longitude", mLastLocation.getLongitude());
+        mapIntent.putExtra("Latitude", Double.parseDouble(mLatitude));
+        mapIntent.putExtra("Longitude", Double.parseDouble(mLongitude));
         startActivity(mapIntent);
     }
 
