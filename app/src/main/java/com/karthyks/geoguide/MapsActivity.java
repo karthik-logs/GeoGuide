@@ -56,13 +56,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onStop() {
         super.onStop();
-        stopService(mLocationServiceIntent);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopService(mLocationServiceIntent);
     }
 
     /**
@@ -133,6 +131,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Double lon = Double.parseDouble(intent.getStringExtra("longitude"));
             mLatitude = lat;
             mLongitude = lon;
+            GetLocation getLocation = new GetLocation();
+            getLocation.DecodeLocation(getApplicationContext(), mLatitude, mLongitude, p);
+        }
+    };
+
+    private GetLocation.LocationReceiver p = new GetLocation.LocationReceiver() {
+        @Override
+        public void onDecodeLocation(String location) {
             setUpMap();
         }
     };

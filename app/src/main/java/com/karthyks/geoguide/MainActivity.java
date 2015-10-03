@@ -13,6 +13,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.gms.location.LocationResult;
+
 public class MainActivity extends AppCompatActivity {
 
     Location mLastLocation;
@@ -93,13 +95,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        stopService(mLocationServiceIntent);
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
-        stopService(mLocationServiceIntent);
         super.onDestroy();
     }
 
@@ -121,24 +121,30 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_settings) {
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
+    private GetLocation.LocationReceiver p = new GetLocation.LocationReceiver() {
+        @Override
+        public void onDecodeLocation(String location) {
+            resultText = location;
+            UpdateUIText();
+            _currentLocation.setClickable(true);
+        }
+    };
 
     public void GeoLocate(View v) {
-        //startService(mLocationServiceIntent);
+
     }
 
     private BroadcastReceiver locationUpdate =  new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            resultText = intent.getStringExtra("location");
             mLatitude = intent.getStringExtra("latitude");
             mLongitude = intent.getStringExtra("longitude");
             mLastUpdateTime = intent.getStringExtra("lastUpdateTime");
-            _currentLocation.setClickable(true);
-            UpdateUIText();
+            GetLocation getLocation = new GetLocation();
+            getLocation.DecodeLocation(getApplicationContext(), Double.parseDouble(mLatitude), Double.parseDouble(mLongitude), p);
         }
     };
 

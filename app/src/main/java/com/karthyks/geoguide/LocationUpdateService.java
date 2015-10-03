@@ -4,7 +4,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -18,7 +17,7 @@ import com.google.android.gms.location.LocationServices;
 import java.text.DateFormat;
 import java.util.Date;
 
-public class LocationUpdateService extends Service implements GeoLocatorReceiver.Receiver, LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class LocationUpdateService extends Service implements LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     /** indicates how to behave if the service is killed */
     int mStartMode;
@@ -28,45 +27,32 @@ public class LocationUpdateService extends Service implements GeoLocatorReceiver
 
     /** indicates whether onRebind should be used */
     boolean mAllowRebind;
-
-
-
-    GeoLocatorReceiver mGeoLocatorReceiver;
-    Intent mGeoLocatorIntent;
-
-    String mResultText;
     String mLastUpdateTime;
     String mLatitude;
     String mLongitude;
 
+    Location mLastLocation;
+
+    GoogleApiClient mGoogleApiClient;
     /** Called when the service is being created. */
     @Override
     public void onCreate() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
     }
 
     /** The service is starting, due to a call to startService() */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("Location Service", "Entered");
-        mGeoLocatorReceiver = new GeoLocatorReceiver(new Handler());
-        mGeoLocatorReceiver.setReceiver(this);
-        buildGoogleApiClient();
+
         mGoogleApiClient.connect();
-        createLocationRequest();
         return mStartMode;
-
     }
 
-    private void GeoLocatorIntent()
-    {
-        Log.d("GeoLocator", "Called");
-        mGeoLocatorIntent = new Intent(this, GeoLocator.class);
-        mGeoLocatorIntent.putExtra("latitude", mLastLocation.getLatitude());
-        mGeoLocatorIntent.putExtra("longitude", mLastLocation.getLongitude());
-        mGeoLocatorIntent.putExtra("receiver", mGeoLocatorReceiver);
-        startService(mGeoLocatorIntent);
-
-    }
     /** A client is binding to the service with bindService() */
     @Override
     public IBinder onBind(Intent intent) {
@@ -95,77 +81,47 @@ public class LocationUpdateService extends Service implements GeoLocatorReceiver
     }
 
 
-    LocationRequest mLocationRequest;
-
-    protected void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
+    protected LocationRequest createLocationRequest() {
+        LocationRequest mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(5000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        return mLocationRequest;
     }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        mLastLocation = location;
-        mLatitude = String.valueOf(mLastLocation.getLatitude());
-        mLongitude = String.valueOf(mLastLocation.getLongitude());
-        mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-    }
-
     protected void startLocationUpdates() {
         LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, mLocationRequest, this);
+                mGoogleApiClient, createLocationRequest(), this);
     }
 
     protected void stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
     }
-
     @Override
-    public void onReceiveResult(int resultCode, Bundle resultData) {
-        switch(resultCode)
-        {
-            case Constants.STATUS_RUNNING:
-                mResultText = "Searching...";
-                break;
-            case Constants.STATUS_FINISHED:
-                mResultText = resultData.getString("location");
-                mLatitude = String.valueOf(mLastLocation.getLatitude());
-                mLongitude = String.valueOf(mLastLocation.getLongitude());
-                broadcastResult();
-                break;
-            case Constants.STATUS_ERROR:
-                mResultText = resultData.getString("message");
-                break;
-        }
+    public void onLocationChanged(Location location) {
+        mLastLocation = location;
+        mLatitude = String.valueOf(mLastLocation.getLatitude());
+        mLongitude = String.valueOf(mLastLocation.getLongitude());
+        mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+        broadcastResult();
     }
+
 
     public void broadcastResult() {
         Intent resultIntent = new Intent("LocationResult");
         resultIntent.putExtra("latitude", mLatitude);
         resultIntent.putExtra("longitude", mLongitude);
-        resultIntent.putExtra("location", mResultText);
         resultIntent.putExtra("lastUpdateTime", mLastUpdateTime);
         LocalBroadcastManager.getInstance(this).sendBroadcast(resultIntent);
     }
-    //region Google API client connection
-    GoogleApiClient mGoogleApiClient;
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
 
-    Location mLastLocation;
+
     @Override
     public void onConnected(Bundle bundle) {
         Log.d("Google API Connection", "Connected");
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
-        GeoLocatorIntent();
+
         startLocationUpdates();
     }
 
