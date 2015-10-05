@@ -1,17 +1,22 @@
 package com.karthyks.geoguide;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.LocationResult;
 
@@ -33,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
 
     Intent mLocationServiceIntent;
 
+    LocationUpdateService.DummyBinder mBinderService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +51,19 @@ public class MainActivity extends AppCompatActivity {
         mLocationServiceIntent = new Intent(this, LocationUpdateService.class);
         updateValuesFromBundle(savedInstanceState);
     }
+
+    ServiceConnection mServiceConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mBinderService = (LocationUpdateService.DummyBinder)service;
+            Toast.makeText(getBaseContext(), mBinderService.LastKnownLongitude(), Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 
     @Override
     protected void onStart() {
@@ -83,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         startService(mLocationServiceIntent);
         LocalBroadcastManager.getInstance(this).registerReceiver(locationUpdate, new IntentFilter("LocationResult"));
+        bindService(mLocationServiceIntent, mServiceConn, 0);
     }
 
     @Override
@@ -91,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
         stopService(mLocationServiceIntent);
         _currentLocation.setClickable(false);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(locationUpdate);
+        unbindService(mServiceConn);
     }
 
     @Override
@@ -172,9 +194,13 @@ public class MainActivity extends AppCompatActivity {
                 // Since LOCATION_KEY was found in the Bundle, we can be sure that
                 // mCurrentLocation is not null.
                 mLastLocation = savedInstanceState.getParcelable(Constants.LOCATION_KEY);
-                mLatitude = String.valueOf(mLastLocation.getLatitude());
-                mLongitude = String.valueOf(mLastLocation.getLongitude());
-                UpdateUIText();
+                if(mLastLocation != null)
+                {
+                    mLatitude = String.valueOf(mLastLocation.getLatitude());
+                    mLongitude = String.valueOf(mLastLocation.getLongitude());
+                    UpdateUIText();
+                }
+
             }
 
             // Update the value of mLastUpdateTime from the Bundle and update the UI.

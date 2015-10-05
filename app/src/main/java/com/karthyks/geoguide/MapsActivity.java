@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -15,6 +17,13 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
@@ -26,6 +35,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Intent mLocationServiceIntent;
 
     Marker mMarker;
+    Polyline mLine;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,8 +116,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setUpMap() {
         if(mMarker == null)
             mMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(mLatitude, mLongitude)).title("You are here!"));
-        else
-           mMarker.setPosition(new LatLng(mLatitude, mLongitude));
+        else {
+            mMarker.setPosition(new LatLng(mLatitude, mLongitude));
+        }
+        if(mLine == null) {
+            mLine = mMap.addPolyline(new PolylineOptions()
+                    .add(new LatLng(mLatitude, mLongitude), new LatLng(mLatitude, mLongitude))
+                    .width(5)
+                    .color(Color.BLUE)
+            );
+        }
+        else {
+            List<LatLng> wayPoints = mLine.getPoints();
+            wayPoints.add(new LatLng(mLatitude, mLongitude));
+            mLine.setPoints(wayPoints);
+        }
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(mLatitude, mLongitude)));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
                 new LatLng(mLatitude, mLongitude), 13));

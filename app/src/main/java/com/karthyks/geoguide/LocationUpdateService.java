@@ -3,6 +3,7 @@ package com.karthyks.geoguide;
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -32,6 +33,7 @@ public class LocationUpdateService extends Service implements LocationListener, 
     String mLongitude;
 
     Location mLastLocation;
+    DummyBinder binder;
 
     GoogleApiClient mGoogleApiClient;
     /** Called when the service is being created. */
@@ -42,13 +44,12 @@ public class LocationUpdateService extends Service implements LocationListener, 
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+        binder = new DummyBinder();
     }
 
     /** The service is starting, due to a call to startService() */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("Location Service", "Entered");
-
         mGoogleApiClient.connect();
         return mStartMode;
     }
@@ -56,7 +57,7 @@ public class LocationUpdateService extends Service implements LocationListener, 
     /** A client is binding to the service with bindService() */
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
     }
 
     /** Called when all clients have unbound with unbindService() */
@@ -118,7 +119,6 @@ public class LocationUpdateService extends Service implements LocationListener, 
 
     @Override
     public void onConnected(Bundle bundle) {
-        Log.d("Google API Connection", "Connected");
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
 
@@ -127,14 +127,42 @@ public class LocationUpdateService extends Service implements LocationListener, 
 
     @Override
     public void onConnectionSuspended(int i) {
-        Log.d("Google API Connection", "Suspended");
+
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.d("Google API Connection", "Failed");
+
     }
     //endregion
+    public class DummyBinder extends Binder {
 
+        String error = "Not yet Updated";
+        public DummyBinder() {
 
+        }
+
+        public void requestLocationUpdates() {
+            if(mGoogleApiClient.isConnected())
+                startLocationUpdates();
+            else
+            {
+                mGoogleApiClient.connect();
+            }
+        }
+
+        public Location LastKnownLocation()
+        {
+            return (mLastLocation != null) ? mLastLocation : null;
+        }
+
+        public String LastKnownLatitude()
+        {
+            return (mLatitude != null) ? mLatitude : error;
+        }
+        public String LastKnownLongitude()
+        {
+            return (mLongitude != null) ? mLongitude : error;
+        }
+    }
 }

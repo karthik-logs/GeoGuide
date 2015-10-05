@@ -14,12 +14,18 @@ import java.util.List;
 /**
  * Created by mtap on 9/30/2015.
  */
+
 public class GeoLocator extends IntentService {
     /**
      * Creates an IntentService.  Invoked by your subclass's constructor.
      *
      * param name Used to name the worker thread, important only for debugging.
      */
+
+    public enum LocationBasedOn{
+        LAT_LNG,
+        STRING
+    }
 
     ResultReceiver geoLocatorReceiver;
 

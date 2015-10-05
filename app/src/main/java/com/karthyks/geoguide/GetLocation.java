@@ -17,14 +17,7 @@ public class  GetLocation implements  GeoLocatorReceiver.Receiver{
     Intent mGeoLocatorIntent;
 
     String mResultText;
-    String mLatitude;
-    String mLongitude;
-
-
-    Location mLastLocation;
-
     LocationReceiver mReceiverCallBack;
-    private static final String TAG = "GeoLocator";
 
 
     public GetLocation()
@@ -50,17 +43,27 @@ public class  GetLocation implements  GeoLocatorReceiver.Receiver{
     }
 
 
-    public interface LocationReceiver
-    {
+    public interface LocationReceiver {
         void onDecodeLocation(String location);
     }
 
-    public void DecodeLocation(Context context, double lat, double lng, LocationReceiver callBack)
-    {
+    public void DecodeLocation(Context context, double lat, double lng, LocationReceiver callBack) {
         mGeoLocatorIntent = new Intent(context, GeoLocator.class);
         mGeoLocatorIntent.putExtra("latitude", lat);
         mGeoLocatorIntent.putExtra("longitude", lng);
         mGeoLocatorIntent.putExtra("receiver", mGeoLocatorReceiver);
+        GeoLocator.LocationBasedOn locationBasedOn = GeoLocator.LocationBasedOn.LAT_LNG;
+        mGeoLocatorIntent.putExtra("BasedOn", locationBasedOn);
+        context.startService(mGeoLocatorIntent);
+        mReceiverCallBack = callBack;
+    }
+
+    public void DecodeLocation(Context context, String location, LocationReceiver callBack){
+        mGeoLocatorIntent = new Intent(context, GeoLocator.class);
+        mGeoLocatorIntent.putExtra("locationString", location);
+        mGeoLocatorIntent.putExtra("receiver", mGeoLocatorReceiver);
+        GeoLocator.LocationBasedOn locationBasedOn = GeoLocator.LocationBasedOn.STRING;
+        mGeoLocatorIntent.putExtra("BasedOn", locationBasedOn);
         context.startService(mGeoLocatorIntent);
         mReceiverCallBack = callBack;
     }
