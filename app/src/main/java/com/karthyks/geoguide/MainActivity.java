@@ -232,11 +232,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   {
     String currentDate = java.text.DateFormat.getDateTimeInstance().format(Calendar.getInstance()
         .getTime());
-    if(mDBHelper.getLocationProperty(resultText, mDBHelper.getAllLocationProperties())
-        .getLocation() != null){
-       Toast.makeText(getApplicationContext(), "Already been here", Toast.LENGTH_LONG).show();
-      return;
+    if(mDBHelper.getAllLocationProperties().size() > 0){
+      if(mDBHelper.getLocationProperty(resultText, mDBHelper.getAllLocationProperties())
+              .getLocation() != null){
+        Toast.makeText(getApplicationContext(), "Already been here", Toast.LENGTH_LONG).show();
+        return;
+      }
     }
+
     if(mDBHelper.insertIntoLocationsTable(resultText, mLatitude, mLongitude, currentDate)) {
       Toast.makeText(getApplicationContext(), "Added to your location", Toast.LENGTH_LONG).show();
     }

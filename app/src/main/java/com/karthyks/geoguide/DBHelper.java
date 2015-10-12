@@ -64,16 +64,14 @@ public class DBHelper extends SQLiteOpenHelper {
     return numRows;
   }
 
-  public Integer deleteContact (Integer id)
-  {
+  public Integer deleteContact (Integer id) {
     SQLiteDatabase db = this.getWritableDatabase();
     return db.delete(Constants.LOCATIONS_TABLE_NAME,
         "id = ? ",
         new String[] { Integer.toString(id) });
   }
 
-  public ArrayList<String> getAllLocations()
-  {
+  public ArrayList<String> getAllLocations() {
     ArrayList<String> array_list = new ArrayList<>();
     SQLiteDatabase db = this.getReadableDatabase();
     Cursor res =  db.rawQuery( "select * from " + Constants.LOCATIONS_TABLE_NAME, null );
@@ -104,6 +102,8 @@ public class DBHelper extends SQLiteOpenHelper {
   }
 
   public LocationProperty getLocationProperty(String loc, ArrayList<LocationProperty> locationProperties){
+    if(locationProperties.size() < 1)
+      return  null;
     for(int i = 0; i < locationProperties.size(); i++){
       //Log.d("GetLocationProperty", "Location : " + loc);
       //Log.d("GetLocationProperty", "loc from locProp : " + locationProperties.get(i).getLocation());
