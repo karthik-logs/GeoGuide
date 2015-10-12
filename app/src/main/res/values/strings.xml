@@ -6,9 +6,14 @@
     <string name="curr_loc">Current Location</string>
     <string name="end_loc_hint">Enter your Destination</string>
     <string name="end_loc">End Location</string>
-    <string name="getLocationButtonText">Get My Location</string>
+    <string name="getLocationButtonText">Save Location</string>
 
     <string name="latitudeText">0 0 0</string>
     <string name="longitudeText">0 0 0</string>
     <string name="title_activity_maps">Map</string>
+    <string name="title_activity_location_list">My Locations</string>
+
+    <string name="scrollView">scrollView</string>
+    <string name="listView">listView</string>
+    <string name="goToListButton">My Locations</string>
 </resources>
