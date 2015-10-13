@@ -50,6 +50,11 @@
             android:name=".LocationListActivity"
             android:label="@string/title_activity_location_list" >
         </activity>
+
+        <provider
+            android:name = ".LocationProvider"
+            android:authorities="com.karthyks.geoguide.VisitedLocations">
+        </provider>
     </application>
 
 </manifest>

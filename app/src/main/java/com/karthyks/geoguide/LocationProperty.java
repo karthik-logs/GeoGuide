@@ -8,8 +8,11 @@ public class LocationProperty{
   String mLongitude;
   String mLocation;
   String mTravelledTime;
+  int mIndex;
 
-
+  public int getIndex(){
+    return this.mIndex;
+  }
   public String getLatitude(){
     return this.mLatitude;
   }
@@ -23,10 +26,11 @@ public class LocationProperty{
     return this.mTravelledTime;
   }
 
-  public LocationProperty(String Location, String Latitude, String Longitude, String travelledTime){
+  public LocationProperty(String Location, String Latitude, String Longitude, String travelledTime, int index){
     mLocation = Location;
     mLatitude = Latitude;
     mLongitude = Longitude;
     mTravelledTime = travelledTime;
+    mIndex = index;
   }
 }

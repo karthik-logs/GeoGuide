@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -27,10 +26,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
   @Override public void onCreate(SQLiteDatabase db) {
     String CREATE_CONTACTS_TABLE = "CREATE TABLE " + Constants.LOCATIONS_TABLE_NAME + "(id INTEGER " +
-        "PRIMARY KEY AUTOINCREMENT, " + Constants.LOCATIONS_ADDRESS + " TEXT, "
+        "PRIMARY KEY AUTOINCREMENT NOT NULL, " + Constants.LOCATIONS_ADDRESS + " TEXT, "
         + Constants.LOCATIONS_LATITUDE + " TEXT, " + Constants.LOCATIONS_LONGITUDE + " TEXT,"
         + Constants.LOCATIONS_TRAVELLED_DATE + " TEXT"+ ")";
-    Log.i("SQL", CREATE_CONTACTS_TABLE);
+    //Log.i("SQL", CREATE_CONTACTS_TABLE);
     db.execSQL(CREATE_CONTACTS_TABLE);
   }
 
@@ -73,13 +72,9 @@ public class DBHelper extends SQLiteOpenHelper {
 
   public ArrayList<String> getAllLocations() {
     ArrayList<String> array_list = new ArrayList<>();
-    SQLiteDatabase db = this.getReadableDatabase();
-    Cursor res =  db.rawQuery( "select * from " + Constants.LOCATIONS_TABLE_NAME, null );
-    res.moveToFirst();
-
-    while(res.isAfterLast() == false){
-      array_list.add(res.getString(res.getColumnIndex(Constants.LOCATIONS_ADDRESS)));
-      res.moveToNext();
+    ArrayList<LocationProperty> locProps = getAllLocationProperties();
+    for(int i = 0; i < locProps.size(); i++){
+      array_list.add(locProps.get(i).getLocation());
     }
     return array_list;
   }
@@ -87,29 +82,25 @@ public class DBHelper extends SQLiteOpenHelper {
   public ArrayList<LocationProperty> getAllLocationProperties(){
     ArrayList<LocationProperty> locationProperties = new ArrayList<>();
     SQLiteDatabase db = this.getReadableDatabase();
-    Cursor res =  db.rawQuery( "select * from " + Constants.LOCATIONS_TABLE_NAME, null );
+    Cursor res =  db.rawQuery("select * from " + Constants.LOCATIONS_TABLE_NAME, null);
     res.moveToFirst();
     while(res.isAfterLast() == false){
       String Loc = res.getString(res.getColumnIndex(Constants.LOCATIONS_ADDRESS));
       String Lat = res.getString(res.getColumnIndex(Constants.LOCATIONS_LATITUDE));
       String Lon = res.getString(res.getColumnIndex(Constants.LOCATIONS_LONGITUDE));
       String Travelled = res.getString(res.getColumnIndex(Constants.LOCATIONS_TRAVELLED_DATE));
-      LocationProperty locationProperty = new LocationProperty(Loc, Lat, Lon, Travelled);
+      int index = res.getInt(res.getColumnIndex("id"));
+      LocationProperty locationProperty = new LocationProperty(Loc, Lat, Lon, Travelled, index);
       locationProperties.add(locationProperty);
       res.moveToNext();
     }
     return locationProperties;
   }
 
-  public LocationProperty getLocationProperty(String loc, ArrayList<LocationProperty> locationProperties){
-    if(locationProperties.size() < 1)
-      return  null;
-    for(int i = 0; i < locationProperties.size(); i++){
-      //Log.d("GetLocationProperty", "Location : " + loc);
-      //Log.d("GetLocationProperty", "loc from locProp : " + locationProperties.get(i).getLocation());
-      if(loc.equalsIgnoreCase(locationProperties.get(i).getLocation())){
-        return locationProperties.get(i);
-      }
+  public LocationProperty getLocationProperty(int loc, ArrayList<LocationProperty> locationProperties){
+
+    if(locationProperties.size() > 0){
+      return locationProperties.get(loc);
     }
     return null;
   }

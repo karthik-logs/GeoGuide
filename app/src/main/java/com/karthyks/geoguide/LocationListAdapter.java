@@ -48,13 +48,14 @@ public class LocationListAdapter extends BaseAdapter {
     if (convertView == null) {
       LayoutInflater li = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
       v = li.inflate(R.layout.location_list_layout, null);
-      viewHolder = new LocationListViewHolder(v, mLocationValues.get(position), mActivity.getBaseContext
+      viewHolder = new LocationListViewHolder(v, position, mActivity.getBaseContext
           ());
       v.setTag(viewHolder);
     } else {
       viewHolder = (LocationListViewHolder) v.getTag();
     }
-    viewHolder.mTextItem.setText(mLocationValues.get(position));
+    viewHolder.mTextItem.setText(mDBHelper.getLocationProperty(position, mDBHelper.getAllLocationProperties()).getIndex()
+            + " " + mLocationValues.get(position));
     return v;
   }
 }
@@ -63,7 +64,7 @@ class LocationListViewHolder {
   public List<LocationProperty> mLocationProperties;
   public Context mContext;
   DBHelper mDBHelper;
-  public LocationListViewHolder(View base, final String locValue, Context context) {
+  public LocationListViewHolder(View base, final int pos, Context context) {
     mContext = context;
     mTextItem = (TextView) base.findViewById(R.id.listTextView);
     mDBHelper = new DBHelper(mContext);
@@ -72,9 +73,9 @@ class LocationListViewHolder {
     mTextItem.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
         if (v.getId() == mTextItem.getId()) {
-          goToMap(mDBHelper.getLocationProperty(locValue,
+          goToMap(mDBHelper.getLocationProperty(pos,
                   (ArrayList<LocationProperty>) mLocationProperties).getLatitude(),
-              mDBHelper.getLocationProperty(locValue,
+              mDBHelper.getLocationProperty(pos,
                   (ArrayList<LocationProperty>) mLocationProperties).getLongitude());
         }
       }
@@ -83,12 +84,12 @@ class LocationListViewHolder {
     mTextItem.setOnLongClickListener(new View.OnLongClickListener() {
       @Override public boolean onLongClick(View v) {
         if (v.getId() == mTextItem.getId()) {
-          String travelledTime = mDBHelper.getLocationProperty(locValue,
+          String travelledTime = mDBHelper.getLocationProperty(pos,
               (ArrayList<LocationProperty>) mLocationProperties).getTravelledTime();
 
           Toast.makeText(mContext,"Last Travelled : " + travelledTime, Toast.LENGTH_LONG).show();
         }
-        return false;
+        return true;
       }
     });
   }

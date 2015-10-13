@@ -22,4 +22,8 @@ public class Constants {
   public static final String LOCATIONS_LATITUDE = "locationLatitude";
   public static final String LOCATIONS_LONGITUDE = "locationLongitude";
   public static final String LOCATIONS_TRAVELLED_DATE = "locationTravelledTime";
+
+
+  // ContentProvider Constants
+  public static final String PACKAGE_NAME = "com.karthyks.geoguide";
 }

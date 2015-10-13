@@ -2,11 +2,13 @@ package com.karthyks.geoguide;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -232,16 +234,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   {
     String currentDate = java.text.DateFormat.getDateTimeInstance().format(Calendar.getInstance()
         .getTime());
-    if(mDBHelper.getAllLocationProperties().size() > 0){
-      if(mDBHelper.getLocationProperty(resultText, mDBHelper.getAllLocationProperties())
-              .getLocation() != null){
-        Toast.makeText(getApplicationContext(), "Already been here", Toast.LENGTH_LONG).show();
-        return;
-      }
-    }
+//    if(mDBHelper.getAllLocationProperties().size() > 0){
+//      if(mDBHelper.getLocationProperty(resultText, mDBHelper.getAllLocationProperties())
+//              .getLocation() != null){
+//        Toast.makeText(getApplicationContext(), "Already been here", Toast.LENGTH_LONG).show();
+//        return;
+//      }
+//    }
+//    if(mDBHelper.insertIntoLocationsTable(resultText, mLatitude, mLongitude, currentDate)) {
+//      Toast.makeText(getApplicationContext(), "Added to your location", Toast.LENGTH_LONG).show();
+//    }
+    ContentValues cValues = new ContentValues();
+    cValues.put(Constants.LOCATIONS_ADDRESS, resultText);
+    cValues.put(Constants.LOCATIONS_LATITUDE, mLatitude);
+    cValues.put(Constants.LOCATIONS_LONGITUDE, mLongitude);
+    cValues.put(Constants.LOCATIONS_TRAVELLED_DATE, currentDate);
 
-    if(mDBHelper.insertIntoLocationsTable(resultText, mLatitude, mLongitude, currentDate)) {
-      Toast.makeText(getApplicationContext(), "Added to your location", Toast.LENGTH_LONG).show();
-    }
+    Uri uri = getContentResolver().insert(LocationProvider.mURL, cValues);
+    Toast.makeText(getBaseContext(), uri.toString(), Toast.LENGTH_LONG).show();
   }
 }
