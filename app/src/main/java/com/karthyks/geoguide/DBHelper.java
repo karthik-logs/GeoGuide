@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -78,7 +79,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
     return array_list;
   }
-
+// Using SQLite Query
   public ArrayList<LocationProperty> getAllLocationProperties(){
     ArrayList<LocationProperty> locationProperties = new ArrayList<>();
     SQLiteDatabase db = this.getReadableDatabase();
@@ -97,8 +98,28 @@ public class DBHelper extends SQLiteOpenHelper {
     return locationProperties;
   }
 
-  public LocationProperty getLocationProperty(int loc, ArrayList<LocationProperty> locationProperties){
+  // Using ContentResolver
+  public ArrayList<LocationProperty> GetAll(){
+    ArrayList<LocationProperty> locationProperties = new ArrayList<>();
+    String[] projection = new String[] {"id", Constants.LOCATIONS_ADDRESS, Constants.LOCATIONS_LATITUDE,
+                                        Constants.LOCATIONS_LONGITUDE, Constants.LOCATIONS_TRAVELLED_DATE};
+    Cursor cursor = mContext.getContentResolver().query(LocationProvider.mURL, projection, null, null, null);
+    cursor.moveToFirst();
+    while(cursor.isAfterLast() == false){
+      String Loc = cursor.getString(cursor.getColumnIndex(Constants.LOCATIONS_ADDRESS));
+      String Lat = cursor.getString(cursor.getColumnIndex(Constants.LOCATIONS_LATITUDE));
+      String Lon = cursor.getString(cursor.getColumnIndex(Constants.LOCATIONS_LONGITUDE));
+      String Travelled = cursor.getString(cursor.getColumnIndex(Constants.LOCATIONS_TRAVELLED_DATE));
+      int index = cursor.getInt(cursor.getColumnIndex("id"));
+      LocationProperty locationProperty = new LocationProperty(Loc, Lat, Lon, Travelled, index);
+      locationProperties.add(locationProperty);
+      Log.d("Query", Travelled + " : " + Loc);
+      cursor.moveToNext();
+    }
+    return locationProperties;
+  }
 
+  public LocationProperty getLocationProperty(int loc, ArrayList<LocationProperty> locationProperties){
     if(locationProperties.size() > 0){
       return locationProperties.get(loc);
     }
